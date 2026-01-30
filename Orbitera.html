@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbitera</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            font-family: Arial, sans-serif;
+        }
+
+        .left-section {
+            width: 50%;
+            background-color: #f5f5f5;
+            transition: width 0.3s ease;
+            position: relative;
+            padding-bottom: 60px;
+        }
+
+        .left-section.expanded {
+            width: 100%;
+        }
+
+        .right-section {
+            width: 50%;
+            padding: 20px;
+            display: flex;
+            transition: width 0.3s ease;
+        }
+
+        .right-section.hidden {
+            width: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .toggle-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 18px;
+            color: black;
+            z-index: 10;
+            border-radius: 4px;
+        }
+
+        .toggle-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .text-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 18px;
+            color: black;
+            z-index: 10;
+            border-radius: 4px;
+        }
+
+        .text-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: white;
+            border-top: 1px solid #ddd;
+            display: none;
+            align-items: center;
+            padding: 0 20px;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .bottom-bar.visible {
+            display: flex;
+        }
+
+        .color-picker-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+        }
+
+        .color-picker-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .color-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #000000;
+            border: 2px solid #ddd;
+        }
+
+        .color-input {
+            display: none;
+        }
+
+        .toggle-gradient-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-gradient-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .gradient-controls {
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gradient-controls.visible {
+            display: flex;
+        }
+
+        .gradient-type-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .draggable-text {
+            position: absolute;
+            padding: 5px 10px;
+            cursor: move;
+            user-select: none;
+            border: 2px solid transparent;
+            min-width: 100px;
+            font-size: 16px;
+            color: #000000;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .draggable-text.selected {
+            border: 2px solid #007bff;
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+
+        .draggable-text.editing {
+            cursor: text;
+            user-select: text;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #4a90e2;
+            border: 2px solid white;
+            display: none;
+            z-index: 100;
+            border-radius: 2px;
+            user-select: none;
+        }
+
+        .draggable-text.selected .resize-handle {
+            display: block;
+            pointer-events: auto;
+        }
+
+        .draggable-text.editing .resize-handle {
+            display: block;
+            pointer-events: none;
+        }
+
+        .resize-handle.top-left {
+            top: -6px;
+            left: -6px;
+            cursor: nwse-resize;
+        }
+
+        .resize-handle.top-right {
+            top: -6px;
+            right: -6px;
+            cursor: nesw-resize;
+        }
+
+        .resize-handle.bottom-left {
+            bottom: -6px;
+            left: -6px;
+            cursor: nesw-resize;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: -6px;
+            right: -6px;
+            cursor: nwse-resize;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            resize: none;
+            font-family: Arial, sans-serif;
+        }
+
+        textarea::placeholder {
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="left-section" id="leftSection">
+        <button class="toggle-button" id="toggleButton" onclick="togglePanel()">&lt;</button>
+        <button class="text-button" id="textButton" onclick="createTextBox()">T</button>
+        <div class="bottom-bar" id="bottomBar">
+            <button class="color-picker-button" id="colorPickerButton" onclick="openColorPicker()">
+                <div class="color-circle" id="colorCircle"></div>
+            </button>
+            <input type="color" class="color-input" id="colorInput" value="#000000">
+            
+            <button class="toggle-gradient-button" id="toggleGradientButton" onclick="toggleGradient()">+</button>
+            
+            <div class="gradient-controls" id="gradientControls">
+                <button class="color-picker-button" onclick="openGradientColorPicker()">
+                    <div class="color-circle" id="gradientColorCircle" style="background-color: #ff0000;"></div>
+                </button>
+                <input type="color" class="color-input" id="gradientColorInput" value="#ff0000">
+                
+                <select class="gradient-type-select" id="gradientTypeSelect" onchange="updateGradient()">
+                    <option value="linear">linear</option>
+                    <option value="radial">radial</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="right-section" id="rightSection">
+        <textarea placeholder="Write or design"></textarea>
+    </div>
+
+    <script>
+        let selectedTextBox = null;
+        let isDragging = false;
+        let isResizing = false;
+        let currentResizeHandle = null;
+        let offsetX = 0;
+        let offsetY = 0;
+        let startX = 0;
+        let startY = 0;
+        let startWidth = 0;
+        let startHeight = 0;
+        let startFontSize = 16;
+        let gradientEnabled = false;
+        let isUpdatingFromCode = false;
+
+        function togglePanel() {
+            const leftSection = document.getElementById('leftSection');
+            const rightSection = document.getElementById('rightSection');
+            const toggleButton = document.getElementById('toggleButton');
+            
+            if (rightSection.classList.contains('hidden')) {
+                rightSection.classList.remove('hidden');
+                leftSection.classList.remove('expanded');
+                toggleButton.innerHTML = '&lt;';
+            } else {
+                rightSection.classList.add('hidden');
+                leftSection.classList.add('expanded');
+                toggleButton.innerHTML = '&gt;';
+            }
+        }
+
+        function toggleGradient() {
+            const toggleButton = document.getElementById('toggleGradientButton');
+            const gradientControls = document.getElementById('gradientControls');
+            
+            gradientEnabled = !gradientEnabled;
+            
+            if (gradientEnabled) {
+                toggleButton.textContent = '-';
+                gradientControls.classList.add('visible');
+                if (selectedTextBox) {
+                    applyGradient();
+                }
+            } else {
+                toggleButton.textContent = '+';
+                gradientControls.classList.remove('visible');
+                if (selectedTextBox) {
+                    removeGradient();
+                }
+            }
+        }
+
+        function applyGradient() {
+            if (!selectedTextBox) return;
+            
+            const color1 = document.getElementById('colorInput').value;
+            const color2 = document.getElementById('gradientColorInput').value;
+            const gradientType = document.getElementById('gradientTypeSelect').value;
+            
+            selectedTextBox.dataset.gradientEnabled = 'true';
+            selectedTextBox.dataset.gradientColor1 = color1;
+            selectedTextBox.dataset.gradientColor2 = color2;
+            selectedTextBox.dataset.gradientType = gradientType;
+            
+            // Remove any existing color
+            selectedTextBox.style.color = '';
+            
+            // Set gradient background
+            if (gradientType === 'linear') {
+                selectedTextBox.style.background = `linear-gradient(90deg, ${color1}, ${color2})`;
+            } else {
+                selectedTextBox.style.background = `radial-gradient(circle, ${color1}, ${color2})`;
+            }
+            
+            // Set clip properties
+            selectedTextBox.style.webkitBackgroundClip = 'text';
+            selectedTextBox.style.webkitTextFillColor = 'transparent';
+            selectedTextBox.style.backgroundClip = 'text';
+            
+            updateHTMLCode();
+        }
+
+        function removeGradient() {
+            if (!selectedTextBox) return;
+            
+            selectedTextBox.dataset.gradientEnabled = 'false';
+            
+            // Remove gradient properties
+            selectedTextBox.style.background = '';
+            selectedTextBox.style.webkitBackgroundClip = '';
+            selectedTextBox.style.webkitTextFillColor = '';
+            selectedTextBox.style.backgroundClip = '';
+            
+            // Restore solid color
+            const color = selectedTextBox.dataset.solidColor || '#000000';
+            selectedTextBox.style.color = color;
+            
+            updateHTMLCode();
+        }
+
+        function updateGradient() {
+            if (gradientEnabled && selectedTextBox) {
+                applyGradient();
+            }
+        }
+
+        function openColorPicker() {
+            const colorInput = document.getElementById('colorInput');
+            colorInput.click();
+        }
+
+        function openGradientColorPicker() {
+            const gradientColorInput = document.getElementById('gradientColorInput');
+            gradientColorInput.click();
+        }
+
+        function updateColorCircle() {
+            const colorCircle = document.getElementById('colorCircle');
+            const gradientColorCircle = document.getElementById('gradientColorCircle');
+            
+            if (selectedTextBox) {
+                const color1 = selectedTextBox.dataset.gradientColor1 || selectedTextBox.dataset.solidColor || '#000000';
+                const color2 = selectedTextBox.dataset.gradientColor2 || '#ff0000';
+                colorCircle.style.backgroundColor = color1;
+                gradientColorCircle.style.backgroundColor = color2;
+            } else {
+                colorCircle.style.backgroundColor = '#000000';
+                gradientColorCircle.style.backgroundColor = '#ff0000';
+            }
+        }
+
+        function showBottomBar() {
+            const bottomBar = document.getElementById('bottomBar');
+            if (selectedTextBox) {
+                bottomBar.classList.add('visible');
+            } else {
+                bottomBar.classList.remove('visible');
+            }
+        }
+
+        // Listen for color changes
+        document.getElementById('colorInput').addEventListener('input', function(e) {
+            const newColor = e.target.value;
+            if (selectedTextBox) {
+                selectedTextBox.dataset.solidColor = newColor;
+                selectedTextBox.dataset.gradientColor1 = newColor;
+                
+                if (gradientEnabled && selectedTextBox.dataset.gradientEnabled === 'true') {
+                    applyGradient();
+                } else {
+                    selectedTextBox.style.color = newColor;
+                    // Clear any gradient properties
+                    selectedTextBox.style.background = '';
+                    selectedTextBox.style.webkitBackgroundClip = '';
+                    selectedTextBox.style.webkitTextFillColor = '';
+                    selectedTextBox.style.backgroundClip = '';
+                }
+                updateColorCircle();
+                updateHTMLCode();
+            }
+        });
+
+        function updateVisualFromCode() {
+            const textarea = document.querySelector('textarea');
+            const htmlCode = textarea.value;
+            
+            // Parse the HTML to extract styles and text
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlCode, 'text/html');
+            
+            // Get all paragraph elements
+            const paragraphs = doc.querySelectorAll('p');
+            const leftSection = document.getElementById('leftSection');
+            const existingTextBoxes = leftSection.querySelectorAll('.draggable-text');
+            
+            // Update existing text boxes or create new ones
+            paragraphs.forEach((p, index) => {
+                const className = p.className;
+                const textContent = p.textContent.trim();
+                
+                if (!textContent) return;
+                
+                // Find the corresponding style
+                const styleTag = doc.querySelector('style');
+                if (!styleTag) return;
+                
+                const styleText = styleTag.textContent;
+                const classMatch = styleText.match(new RegExp(`\\.${className}\\s*{([^}]*)}`, 's'));
+                
+                if (!classMatch) return;
+                
+                const styles = classMatch[1];
+                
+                // Extract individual style properties
+                const fontSizeMatch = styles.match(/font-size:\s*(\d+)px/);
+                const topMatch = styles.match(/top:\s*(\d+)px/);
+                const leftMatch = styles.match(/left:\s*(\d+)px/);
+                const colorMatch = styles.match(/color:\s*([^;]+);/);
+                const backgroundMatch = styles.match(/background:\s*([^;]+);/);
+                const webkitBgClipMatch = styles.match(/-webkit-background-clip:\s*text/);
+                const webkitTextFillMatch = styles.match(/-webkit-text-fill-color:\s*transparent/);
+                
+                let textBox;
+                if (existingTextBoxes[index]) {
+                    textBox = existingTextBoxes[index];
+                } else {
+                    // Create new text box if it doesn't exist
+                    textBox = document.createElement('div');
+                    textBox.className = 'draggable-text';
+                    textBox.contentEditable = false;
+                    textBox.dataset.baseFontSize = '16';
+                    textBox.dataset.solidColor = '#000000';
+                    textBox.dataset.gradientEnabled = 'false';
+                    textBox.dataset.gradientColor1 = '#000000';
+                    textBox.dataset.gradientColor2 = '#ff0000';
+                    textBox.dataset.gradientType = 'linear';
+                    
+                    // Add resize handles
+                    const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+                    handles.forEach(position => {
+                        const handle = document.createElement('div');
+                        handle.className = `resize-handle ${position}`;
+                        handle.contentEditable = 'false';
+                        handle.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            startResize(e, textBox, position);
+                        });
+                        textBox.appendChild(handle);
+                    });
+                    
+                    // Add event listeners
+                    textBox.addEventListener('mousedown', function(e) {
+                        if (!textBox.classList.contains('editing') && !e.target.classList.contains('resize-handle')) {
+                            e.preventDefault();
+                            selectTextBox(textBox);
+                            isDragging = true;
+                            offsetX = e.clientX - textBox.offsetLeft;
+                            offsetY = e.clientY - textBox.offsetTop;
+                        }
+                    });
+                    
+                    textBox.addEventListener('dblclick', function(e) {
+                        if (!e.target.classList.contains('resize-handle')) {
+                            e.preventDefault();
+                            textBox.classList.add('editing');
+                            textBox.contentEditable = true;
+                            textBox.focus();
+                            
+                            const range = document.createRange();
+                            const selection = window.getSelection();
+                            selection.removeAllRanges();
+                            
+                            const firstNode = Array.from(textBox.childNodes).find(node => 
+                                !node.classList || !node.classList.contains('resize-handle')
+                            );
+                            
+                            const lastNode = Array.from(textBox.childNodes).reverse().find(node => 
+                                !node.classList || !node.classList.contains('resize-handle')
+                            );
+                            
+                            if (firstNode && lastNode) {
+                                range.setStartBefore(firstNode);
+                                range.setEndAfter(lastNode);
+                                selection.addRange(range);
+                            }
+                        }
+                    });
+                    
+                    textBox.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' && textBox.classList.contains('editing')) {
+                            e.preventDefault();
+                            textBox.blur();
+                        }
+                    });
+                    
+                    textBox.addEventListener('input', function() {
+                        updateHTMLCode();
+                    });
+                    
+                    textBox.addEventListener('blur', function() {
+                        textBox.classList.remove('editing');
+                        textBox.contentEditable = false;
+                        
+                        const existingHandles = textBox.querySelectorAll('.resize-handle');
+                        if (existingHandles.length < 4) {
+                            existingHandles.forEach(h => h.remove());
+                            const handlePositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+                            handlePositions.forEach(position => {
+                                const handle = document.createElement('div');
+                                handle.className = `resize-handle ${position}`;
+                                handle.contentEditable = 'false';
+                                handle.addEventListener('mousedown', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    startResize(e, textBox, position);
+                                });
+                                textBox.appendChild(handle);
+                            });
+                        }
+                        
+                        const textContent = Array.from(textBox.childNodes)
+                            .filter(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('resize-handle')))
+                            .map(node => node.textContent)
+                            .join('');
+                        
+                        if (textContent.trim() === '') {
+                            Array.from(textBox.childNodes).forEach(node => {
+                                if (!node.classList || !node.classList.contains('resize-handle')) {
+                                    if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
+                                        node.remove();
+                                    }
+                                }
+                            });
+                            const handles = textBox.querySelectorAll('.resize-handle');
+                            if (handles.length > 0) {
+                                textBox.insertBefore(document.createTextNode('Double-click to edit'), handles[0]);
+                            } else {
+                                textBox.textContent = 'Double-click to edit';
+                            }
+                        }
+                        updateHTMLCode();
+                    });
+                    
+                    leftSection.appendChild(textBox);
+                }
+                
+                // Update text content (preserve resize handles)
+                const handles = textBox.querySelectorAll('.resize-handle');
+                Array.from(textBox.childNodes).forEach(node => {
+                    if (!node.classList || !node.classList.contains('resize-handle')) {
+                        node.remove();
+                    }
+                });
+                if (handles.length > 0) {
+                    textBox.insertBefore(document.createTextNode(textContent), handles[0]);
+                } else {
+                    textBox.textContent = textContent;
+                }
+                
+                // Apply styles
+                if (fontSizeMatch) {
+                    textBox.style.fontSize = fontSizeMatch[1] + 'px';
+                }
+                if (topMatch) {
+                    textBox.style.top = topMatch[1] + 'px';
+                }
+                if (leftMatch) {
+                    textBox.style.left = leftMatch[1] + 'px';
+                }
+                
+                // Check if gradient or solid color
+                if (backgroundMatch && webkitBgClipMatch && webkitTextFillMatch) {
+                    // It's a gradient
+                    const background = backgroundMatch[1].trim();
+                    
+                    // Parse gradient
+                    let gradientType = 'linear';
+                    let colors = [];
+                    
+                    if (background.includes('linear-gradient')) {
+                        gradientType = 'linear';
+                        const colorMatches = background.match(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgb\([^)]+\)/g);
+                        if (colorMatches) colors = colorMatches;
+                    } else if (background.includes('radial-gradient')) {
+                        gradientType = 'radial';
+                        const colorMatches = background.match(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgb\([^)]+\)/g);
+                        if (colorMatches) colors = colorMatches;
+                    }
+                    
+                    textBox.dataset.gradientEnabled = 'true';
+                    textBox.dataset.gradientType = gradientType;
+                    textBox.dataset.gradientColor1 = colors[0] || '#000000';
+                    textBox.dataset.gradientColor2 = colors[1] || '#ff0000';
+                    textBox.dataset.solidColor = colors[0] || '#000000';
+                    
+                    // Apply gradient visually
+                    textBox.style.background = background;
+                    textBox.style.webkitBackgroundClip = 'text';
+                    textBox.style.webkitTextFillColor = 'transparent';
+                    textBox.style.backgroundClip = 'text';
+                    textBox.style.color = '';
+                } else if (colorMatch) {
+                    // It's a solid color
+                    const color = colorMatch[1].trim();
+                    textBox.dataset.gradientEnabled = 'false';
+                    textBox.dataset.solidColor = color;
+                    textBox.dataset.gradientColor1 = color;
+                    textBox.style.color = color;
+                    textBox.style.background = '';
+                    textBox.style.webkitBackgroundClip = '';
+                    textBox.style.webkitTextFillColor = '';
+                    textBox.style.backgroundClip = '';
+                }
+            });
+            
+            // Remove extra text boxes if there are more than in the code
+            for (let i = paragraphs.length; i < existingTextBoxes.length; i++) {
+                existingTextBoxes[i].remove();
+            }
+            
+            // Update selected text box UI if it exists
+            if (selectedTextBox) {
+                updateColorCircle();
+            }
+        }
+
+        // Listen for gradient color changes
+        document.getElementById('gradientColorInput').addEventListener('input', function(e) {
+            const newColor = e.target.value;
+            if (selectedTextBox) {
+                selectedTextBox.dataset.gradientColor2 = newColor;
+                if (gradientEnabled && selectedTextBox.dataset.gradientEnabled === 'true') {
+                    applyGradient();
+                }
+                updateColorCircle();
+                updateHTMLCode();
+            }
+        });
+
+        // Listen for changes in the textarea
+        let codeUpdateTimeout;
+        document.querySelector('textarea').addEventListener('input', function() {
+            if (isUpdatingFromCode) return; // Prevent loop
+            
+            clearTimeout(codeUpdateTimeout);
+            codeUpdateTimeout = setTimeout(() => {
+                updateVisualFromCode();
+            }, 500); // Debounce for 500ms
+        });
+
+        function updateHTMLCode() {
+            isUpdatingFromCode = true;
+            
+            const leftSection = document.getElementById('leftSection');
+            const textBoxes = leftSection.querySelectorAll('.draggable-text');
+            const textarea = document.querySelector('textarea');
+            
+            let htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <title>First page</title>
+    <style>
+`;
+            
+            // Add style for each text box
+            textBoxes.forEach((textBox, index) => {
+                // Get text content excluding resize handles
+                const textContent = Array.from(textBox.childNodes)
+                    .filter(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('resize-handle')))
+                    .map(node => node.textContent)
+                    .join('');
+                
+                const text = textContent.trim();
+                
+                if (text && text !== 'Double-click to edit') {
+                    const fontSize = parseInt(textBox.style.fontSize) || 16;
+                    const top = parseInt(textBox.style.top) || 0;
+                    const left = parseInt(textBox.style.left) || 0;
+                    const hasGradient = textBox.dataset.gradientEnabled === 'true';
+                    
+                    htmlContent += `        .text${index + 1} {
+            font-size: ${fontSize}px;
+            position: absolute;
+            top: ${top}px;
+            left: ${left}px;
+`;
+                    
+                    if (hasGradient) {
+                        const color1 = textBox.dataset.gradientColor1 || '#000000';
+                        const color2 = textBox.dataset.gradientColor2 || '#000000';
+                        const gradientType = textBox.dataset.gradientType || 'linear';
+                        
+                        if (gradientType === 'linear') {
+                            htmlContent += `            background: linear-gradient(90deg, ${color1}, ${color2});
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+`;
+                        } else {
+                            htmlContent += `            background: radial-gradient(circle, ${color1}, ${color2});
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+`;
+                        }
+                    } else {
+                        const color = textBox.dataset.solidColor || '#000000';
+                        htmlContent += `            color: ${color};
+`;
+                    }
+                    
+                    htmlContent += `        }
+`;
+                }
+            });
+            
+            htmlContent += `    </style>
+</head>
+<body>
+`;
+            
+            // Add paragraph elements
+            let textIndex = 1;
+            textBoxes.forEach((textBox) => {
+                // Get text content excluding resize handles
+                const textContent = Array.from(textBox.childNodes)
+                    .filter(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('resize-handle')))
+                    .map(node => node.textContent)
+                    .join('');
+                
+                const text = textContent.trim();
+                
+                if (text && text !== 'Double-click to edit') {
+                    htmlContent += `    <p class="text${textIndex}">\n        ${text}\n    </p>\n`;
+                    textIndex++;
+                }
+            });
+            
+            htmlContent += `</body>
+</html>`;
+            
+            textarea.value = htmlContent;
+            
+            setTimeout(() => {
+                isUpdatingFromCode = false;
+            }, 100);
+        }
+
+        function createTextBox() {
+            const leftSection = document.getElementById('leftSection');
+            const textBox = document.createElement('div');
+            textBox.className = 'draggable-text';
+            textBox.contentEditable = false;
+            textBox.textContent = 'Double-click to edit';
+            textBox.style.left = '100px';
+            textBox.style.top = '100px';
+            textBox.style.width = '150px';
+            textBox.style.height = 'auto';
+            textBox.style.fontSize = '16px';
+            textBox.style.color = '#000000';
+            textBox.dataset.baseFontSize = '16';
+            textBox.dataset.solidColor = '#000000';
+            textBox.dataset.gradientEnabled = 'false';
+            textBox.dataset.gradientColor1 = '#000000';
+            textBox.dataset.gradientColor2 = '#ff0000';
+            textBox.dataset.gradientType = 'linear';
+
+            // Create resize handles
+            const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+            handles.forEach(position => {
+                const handle = document.createElement('div');
+                handle.className = `resize-handle ${position}`;
+                handle.contentEditable = 'false'; // Make handles non-editable
+                handle.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startResize(e, textBox, position);
+                });
+                textBox.appendChild(handle);
+            });
+
+            // Single click to select
+            textBox.addEventListener('mousedown', function(e) {
+                if (!textBox.classList.contains('editing') && !e.target.classList.contains('resize-handle')) {
+                    e.preventDefault();
+                    selectTextBox(textBox);
+                    isDragging = true;
+                    offsetX = e.clientX - textBox.offsetLeft;
+                    offsetY = e.clientY - textBox.offsetTop;
+                }
+            });
+
+            // Double click to edit
+            textBox.addEventListener('dblclick', function(e) {
+                if (!e.target.classList.contains('resize-handle')) {
+                    e.preventDefault();
+                    textBox.classList.add('editing');
+                    textBox.contentEditable = true;
+                    textBox.focus();
+                    
+                    // Select all text but exclude resize handles
+                    const range = document.createRange();
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    
+                    // Find first non-handle node
+                    const firstNode = Array.from(textBox.childNodes).find(node => 
+                        !node.classList || !node.classList.contains('resize-handle')
+                    );
+                    
+                    // Find last non-handle node
+                    const lastNode = Array.from(textBox.childNodes).reverse().find(node => 
+                        !node.classList || !node.classList.contains('resize-handle')
+                    );
+                    
+                    if (firstNode && lastNode) {
+                        range.setStartBefore(firstNode);
+                        range.setEndAfter(lastNode);
+                        selection.addRange(range);
+                    }
+                }
+            });
+
+            // Handle Enter key to finish editing
+            textBox.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && textBox.classList.contains('editing')) {
+                    e.preventDefault();
+                    textBox.blur();
+                }
+            });
+
+            // Update HTML code when typing
+            textBox.addEventListener('input', function() {
+                updateHTMLCode();
+            });
+
+            // Exit edit mode on blur
+            textBox.addEventListener('blur', function() {
+                textBox.classList.remove('editing');
+                textBox.contentEditable = false;
+                
+                // Ensure resize handles still exist
+                const existingHandles = textBox.querySelectorAll('.resize-handle');
+                if (existingHandles.length < 4) {
+                    // Remove any existing handles
+                    existingHandles.forEach(h => h.remove());
+                    // Recreate all handles
+                    const handlePositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+                    handlePositions.forEach(position => {
+                        const handle = document.createElement('div');
+                        handle.className = `resize-handle ${position}`;
+                        handle.contentEditable = 'false';
+                        handle.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            startResize(e, textBox, position);
+                        });
+                        textBox.appendChild(handle);
+                    });
+                }
+                
+                // Get text content excluding resize handles
+                const textContent = Array.from(textBox.childNodes)
+                    .filter(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('resize-handle')))
+                    .map(node => node.textContent)
+                    .join('');
+                
+                if (textContent.trim() === '') {
+                    // Clear text but keep handles
+                    Array.from(textBox.childNodes).forEach(node => {
+                        if (!node.classList || !node.classList.contains('resize-handle')) {
+                            if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
+                                node.remove();
+                            }
+                        }
+                    });
+                    // Add placeholder text at the beginning
+                    const handles = textBox.querySelectorAll('.resize-handle');
+                    if (handles.length > 0) {
+                        textBox.insertBefore(document.createTextNode('Double-click to edit'), handles[0]);
+                    } else {
+                        textBox.textContent = 'Double-click to edit';
+                    }
+                }
+                updateHTMLCode();
+            });
+
+            leftSection.appendChild(textBox);
+            selectTextBox(textBox);
+            updateHTMLCode();
+        }
+
+        function selectTextBox(textBox) {
+            if (selectedTextBox) {
+                selectedTextBox.classList.remove('selected');
+            }
+            selectedTextBox = textBox;
+            textBox.classList.add('selected');
+            
+            // Update color picker to match selected text
+            const solidColor = textBox.dataset.solidColor || '#000000';
+            const gradientColor1 = textBox.dataset.gradientColor1 || solidColor;
+            const gradientColor2 = textBox.dataset.gradientColor2 || '#000000';
+            const hasGradient = textBox.dataset.gradientEnabled === 'true';
+            const gradientType = textBox.dataset.gradientType || 'linear';
+            
+            document.getElementById('colorInput').value = gradientColor1;
+            document.getElementById('gradientColorInput').value = gradientColor2;
+            document.getElementById('gradientTypeSelect').value = gradientType;
+            
+            // Update gradient button and controls
+            const toggleButton = document.getElementById('toggleGradientButton');
+            const gradientControls = document.getElementById('gradientControls');
+            
+            if (hasGradient) {
+                gradientEnabled = true;
+                toggleButton.textContent = '-';
+                gradientControls.classList.add('visible');
+            } else {
+                gradientEnabled = false;
+                toggleButton.textContent = '+';
+                gradientControls.classList.remove('visible');
+            }
+            
+            updateColorCircle();
+            showBottomBar();
+        }
+
+        function startResize(e, textBox, position) {
+            isResizing = true;
+            currentResizeHandle = position;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = textBox.offsetWidth;
+            startHeight = textBox.offsetHeight;
+            startLeft = textBox.offsetLeft;
+            startTop = textBox.offsetTop;
+            startFontSize = parseFloat(window.getComputedStyle(textBox).fontSize);
+        }
+
+        // Mouse move for dragging and resizing
+        document.addEventListener('mousemove', function(e) {
+            if (isResizing && selectedTextBox) {
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                if (currentResizeHandle === 'bottom-right') {
+                    const newWidth = Math.max(50, startWidth + deltaX);
+                    selectedTextBox.style.width = newWidth + 'px';
+                    selectedTextBox.style.height = Math.max(20, startHeight + deltaY) + 'px';
+                    // Scale font size based on width change
+                    const scale = newWidth / startWidth;
+                    selectedTextBox.style.fontSize = (startFontSize * scale) + 'px';
+                } else if (currentResizeHandle === 'bottom-left') {
+                    const newWidth = Math.max(50, startWidth - deltaX);
+                    selectedTextBox.style.width = newWidth + 'px';
+                    selectedTextBox.style.left = (startLeft + (startWidth - newWidth)) + 'px';
+                    selectedTextBox.style.height = Math.max(20, startHeight + deltaY) + 'px';
+                    // Scale font size
+                    const scale = newWidth / startWidth;
+                    selectedTextBox.style.fontSize = (startFontSize * scale) + 'px';
+                } else if (currentResizeHandle === 'top-right') {
+                    const newWidth = Math.max(50, startWidth + deltaX);
+                    selectedTextBox.style.width = newWidth + 'px';
+                    const newHeight = Math.max(20, startHeight - deltaY);
+                    selectedTextBox.style.height = newHeight + 'px';
+                    selectedTextBox.style.top = (startTop + (startHeight - newHeight)) + 'px';
+                    // Scale font size
+                    const scale = newWidth / startWidth;
+                    selectedTextBox.style.fontSize = (startFontSize * scale) + 'px';
+                } else if (currentResizeHandle === 'top-left') {
+                    const newWidth = Math.max(50, startWidth - deltaX);
+                    const newHeight = Math.max(20, startHeight - deltaY);
+                    selectedTextBox.style.width = newWidth + 'px';
+                    selectedTextBox.style.height = newHeight + 'px';
+                    selectedTextBox.style.left = (startLeft + (startWidth - newWidth)) + 'px';
+                    selectedTextBox.style.top = (startTop + (startHeight - newHeight)) + 'px';
+                    // Scale font size
+                    const scale = newWidth / startWidth;
+                    selectedTextBox.style.fontSize = (startFontSize * scale) + 'px';
+                }
+            } else if (isDragging && selectedTextBox && !selectedTextBox.classList.contains('editing')) {
+                const leftSection = document.getElementById('leftSection');
+                const rect = leftSection.getBoundingClientRect();
+                
+                let newX = e.clientX - offsetX;
+                let newY = e.clientY - offsetY;
+                
+                // Keep within bounds
+                newX = Math.max(0, Math.min(newX, rect.width - selectedTextBox.offsetWidth));
+                newY = Math.max(0, Math.min(newY, rect.height - selectedTextBox.offsetHeight));
+                
+                selectedTextBox.style.left = newX + 'px';
+                selectedTextBox.style.top = newY + 'px';
+            }
+        });
+
+        // Mouse up to stop dragging/resizing
+        document.addEventListener('mouseup', function() {
+            if (isDragging || isResizing) {
+                updateHTMLCode();
+            }
+            isDragging = false;
+            isResizing = false;
+            currentResizeHandle = null;
+        });
+
+        // Deselect when clicking on blank area
+        document.getElementById('leftSection').addEventListener('mousedown', function(e) {
+            // Check if the click is on the left section itself (not on a text box or bottom bar)
+            if (e.target === this && selectedTextBox) {
+                selectedTextBox.classList.remove('selected');
+                selectedTextBox = null;
+                updateColorCircle();
+                showBottomBar();
+            }
+        });
+
+        // Delete on backspace
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && selectedTextBox && !selectedTextBox.classList.contains('editing')) {
+                e.preventDefault();
+                selectedTextBox.remove();
+                selectedTextBox = null;
+                updateColorCircle();
+                showBottomBar();
+                updateHTMLCode();
+            }
+        });
+    </script>
+</body>
+</html>
