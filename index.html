@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbitera</title>
+    <title>Split Layout</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Impact&family=Lexend:wght@400;700&family=Merriweather:wght@400;700&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -164,6 +167,15 @@
             font-size: 14px;
         }
 
+        .font-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
         .draggable-text {
             position: absolute;
             padding: 5px 10px;
@@ -176,6 +188,7 @@
             font-weight: bold;
             width: fit-content;
             max-width: 100%;
+            font-family: Arial;
         }
 
         .draggable-text.selected {
@@ -272,6 +285,15 @@
                     <option value="radial">radial</option>
                 </select>
             </div>
+            
+            <select class="font-select" id="fontSelect" onchange="updateFont()">
+                <option value="Arial">Arial</option>
+                <option value="Comfortaa">Comfortaa</option>
+                <option value="Impact">Impact</option>
+                <option value="Lexend">Lexend</option>
+                <option value="Merriweather">Merriweather</option>
+                <option value="Caveat">Caveat</option>
+            </select>
         </div>
     </div>
     <div class="right-section" id="rightSection">
@@ -352,7 +374,8 @@
             if (gradientType === 'linear') {
                 selectedTextBox.style.background = `linear-gradient(90deg, ${color1}, ${color2})`;
             } else {
-                selectedTextBox.style.background = `radial-gradient(circle, ${color1}, ${color2})`;
+                // Use farthest-corner to ensure gradient is always visible
+                selectedTextBox.style.background = `radial-gradient(circle farthest-corner at center, ${color1} 0%, ${color2} 100%)`;
             }
             
             // Set clip properties
@@ -385,6 +408,18 @@
             if (gradientEnabled && selectedTextBox) {
                 applyGradient();
             }
+        }
+
+        function updateFont() {
+            if (!selectedTextBox) return;
+            
+            const fontSelect = document.getElementById('fontSelect');
+            const fontFamily = fontSelect.value;
+            
+            selectedTextBox.style.fontFamily = fontFamily;
+            selectedTextBox.dataset.fontFamily = fontFamily;
+            
+            updateHTMLCode();
         }
 
         function openColorPicker() {
@@ -482,6 +517,7 @@
                 const backgroundMatch = styles.match(/background:\s*([^;]+);/);
                 const webkitBgClipMatch = styles.match(/-webkit-background-clip:\s*text/);
                 const webkitTextFillMatch = styles.match(/-webkit-text-fill-color:\s*transparent/);
+                const fontFamilyMatch = styles.match(/font-family:\s*([^;]+);/);
                 
                 let textBox;
                 if (existingTextBoxes[index]) {
@@ -497,6 +533,7 @@
                     textBox.dataset.gradientColor1 = '#000000';
                     textBox.dataset.gradientColor2 = '#ff0000';
                     textBox.dataset.gradientType = 'linear';
+                    textBox.dataset.fontFamily = 'Arial';
                     
                     // Add resize handles
                     const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -631,6 +668,11 @@
                 if (leftMatch) {
                     textBox.style.left = leftMatch[1] + 'px';
                 }
+                if (fontFamilyMatch) {
+                    const fontFamily = fontFamilyMatch[1].trim();
+                    textBox.style.fontFamily = fontFamily;
+                    textBox.dataset.fontFamily = fontFamily;
+                }
                 
                 // Check if gradient or solid color
                 if (backgroundMatch && webkitBgClipMatch && webkitTextFillMatch) {
@@ -657,8 +699,13 @@
                     textBox.dataset.gradientColor2 = colors[1] || '#ff0000';
                     textBox.dataset.solidColor = colors[0] || '#000000';
                     
-                    // Apply gradient visually
-                    textBox.style.background = background;
+                    // Apply gradient visually with updated format
+                    if (gradientType === 'linear') {
+                        textBox.style.background = background;
+                    } else {
+                        // Use the new radial format for consistency
+                        textBox.style.background = `radial-gradient(circle farthest-corner at center, ${colors[0] || '#000000'} 0%, ${colors[1] || '#ff0000'} 100%)`;
+                    }
                     textBox.style.webkitBackgroundClip = 'text';
                     textBox.style.webkitTextFillColor = 'transparent';
                     textBox.style.backgroundClip = 'text';
@@ -741,12 +788,14 @@
                     const top = parseInt(textBox.style.top) || 0;
                     const left = parseInt(textBox.style.left) || 0;
                     const hasGradient = textBox.dataset.gradientEnabled === 'true';
+                    const fontFamily = textBox.dataset.fontFamily || 'Arial';
                     
                     htmlContent += `        .text${index + 1} {
             font-size: ${fontSize}px;
             position: absolute;
             top: ${top}px;
             left: ${left}px;
+            font-family: ${fontFamily};
 `;
                     
                     if (hasGradient) {
@@ -761,7 +810,7 @@
             background-clip: text;
 `;
                         } else {
-                            htmlContent += `            background: radial-gradient(circle, ${color1}, ${color2});
+                            htmlContent += `            background: radial-gradient(circle farthest-corner at center, ${color1} 0%, ${color2} 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -822,12 +871,14 @@
             textBox.style.height = 'auto';
             textBox.style.fontSize = '16px';
             textBox.style.color = '#000000';
+            textBox.style.fontFamily = 'Arial';
             textBox.dataset.baseFontSize = '16';
             textBox.dataset.solidColor = '#000000';
             textBox.dataset.gradientEnabled = 'false';
             textBox.dataset.gradientColor1 = '#000000';
             textBox.dataset.gradientColor2 = '#ff0000';
             textBox.dataset.gradientType = 'linear';
+            textBox.dataset.fontFamily = 'Arial';
 
             // Create resize handles
             const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -971,6 +1022,10 @@
             document.getElementById('colorInput').value = gradientColor1;
             document.getElementById('gradientColorInput').value = gradientColor2;
             document.getElementById('gradientTypeSelect').value = gradientType;
+            
+            // Update font selector
+            const fontFamily = textBox.dataset.fontFamily || 'Arial';
+            document.getElementById('fontSelect').value = fontFamily;
             
             // Update gradient button and controls
             const toggleButton = document.getElementById('toggleGradientButton');
