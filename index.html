@@ -167,6 +167,87 @@
             font-size: 14px;
         }
 
+        .gradient-direction-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 44px;
+            height: 44px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .gradient-controls.visible .gradient-direction-button {
+            display: flex;
+        }
+
+        .gradient-direction-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .compass-popup {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            background-color: #e0e0e0;
+            border: 2px solid #999;
+            border-radius: 12px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .compass-popup.visible {
+            display: flex;
+        }
+
+        .compass-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #f5f5f5;
+            border: 2px solid #666;
+            position: relative;
+        }
+
+        .compass-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 45px;
+            background-color: #333;
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%) rotate(90deg);
+            cursor: grab;
+        }
+
+        .compass-line:active {
+            cursor: grabbing;
+        }
+
+        .compass-tip {
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 8px solid #333;
+        }
+
         .font-select {
             padding: 8px 12px;
             border: 1px solid #ddd;
@@ -342,6 +423,17 @@
                     <option value="linear">linear</option>
                     <option value="radial">radial</option>
                 </select>
+                
+                <button class="gradient-direction-button" id="gradientDirectionButton" onclick="toggleCompass()">
+                    D
+                    <div class="compass-popup" id="compassPopup">
+                        <div class="compass-circle">
+                            <div class="compass-line" id="compassLine">
+                                <div class="compass-tip"></div>
+                            </div>
+                        </div>
+                    </div>
+                </button>
             </div>
             
             <select class="font-select" id="fontSelect" onchange="updateFont()">
@@ -430,13 +522,14 @@
             selectedTextBox.dataset.gradientColor1 = color1;
             selectedTextBox.dataset.gradientColor2 = color2;
             selectedTextBox.dataset.gradientType = gradientType;
+            selectedTextBox.dataset.gradientAngle = gradientAngle;
             
             // Remove any existing color
             selectedTextBox.style.color = '';
             
             // Set gradient background
             if (gradientType === 'linear') {
-                selectedTextBox.style.background = `linear-gradient(90deg, ${color1}, ${color2})`;
+                selectedTextBox.style.background = `linear-gradient(${gradientAngle}deg, ${color1}, ${color2})`;
             } else {
                 // Use farthest-corner to ensure gradient is always visible
                 selectedTextBox.style.background = `radial-gradient(circle farthest-corner at center, ${color1} 0%, ${color2} 100%)`;
@@ -487,6 +580,67 @@
         }
 
         let outlineEnabled = false;
+        let gradientAngle = 90; // Default angle for linear gradient (left to right)
+        let isDraggingCompass = false;
+
+        function toggleCompass() {
+            const compassPopup = document.getElementById('compassPopup');
+            compassPopup.classList.toggle('visible');
+        }
+
+        // Close compass when clicking outside
+        document.addEventListener('click', function(e) {
+            const compassPopup = document.getElementById('compassPopup');
+            const directionButton = document.getElementById('gradientDirectionButton');
+            
+            if (!directionButton.contains(e.target) && compassPopup.classList.contains('visible')) {
+                compassPopup.classList.remove('visible');
+            }
+        });
+
+        // Compass line dragging
+        const compassLine = document.getElementById('compassLine');
+        const compassCircle = compassLine.parentElement;
+
+        compassLine.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            isDraggingCompass = true;
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDraggingCompass) return;
+            
+            const rect = compassCircle.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const deltaX = e.clientX - centerX;
+            const deltaY = e.clientY - centerY;
+            
+            // Calculate angle in degrees (0 = right, 90 = down, 180 = left, 270 = up)
+            let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+            
+            // Convert to CSS gradient angle (0 = up, 90 = right, 180 = down, 270 = left)
+            angle = angle + 90;
+            if (angle < 0) angle += 360;
+            
+            gradientAngle = Math.round(angle);
+            
+            // Update compass line rotation
+            compassLine.style.transform = `translate(-50%, -100%) rotate(${gradientAngle}deg)`;
+            
+            // Update gradient
+            if (selectedTextBox && gradientEnabled) {
+                applyGradient();
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDraggingCompass) {
+                isDraggingCompass = false;
+            }
+        });
 
         function toggleOutline() {
             const toggleButton = document.getElementById('toggleOutlineButton');
@@ -669,6 +823,7 @@
                     textBox.dataset.gradientColor1 = '#000000';
                     textBox.dataset.gradientColor2 = '#ff0000';
                     textBox.dataset.gradientType = 'linear';
+                    textBox.dataset.gradientAngle = '90';
                     textBox.dataset.fontFamily = 'Arial';
                     textBox.dataset.outlineEnabled = 'false';
                     textBox.dataset.outlineColor = '#000000';
@@ -842,11 +997,18 @@
                     // Parse gradient
                     let gradientType = 'linear';
                     let colors = [];
+                    let angle = 90;
                     
                     if (background.includes('linear-gradient')) {
                         gradientType = 'linear';
                         const colorMatches = background.match(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgb\([^)]+\)/g);
                         if (colorMatches) colors = colorMatches;
+                        
+                        // Parse angle
+                        const angleMatch = background.match(/(\d+)deg/);
+                        if (angleMatch) {
+                            angle = parseInt(angleMatch[1]);
+                        }
                     } else if (background.includes('radial-gradient')) {
                         gradientType = 'radial';
                         const colorMatches = background.match(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgb\([^)]+\)/g);
@@ -857,11 +1019,12 @@
                     textBox.dataset.gradientType = gradientType;
                     textBox.dataset.gradientColor1 = colors[0] || '#000000';
                     textBox.dataset.gradientColor2 = colors[1] || '#ff0000';
+                    textBox.dataset.gradientAngle = angle.toString();
                     textBox.dataset.solidColor = colors[0] || '#000000';
                     
                     // Apply gradient visually with updated format
                     if (gradientType === 'linear') {
-                        textBox.style.background = background;
+                        textBox.style.background = `linear-gradient(${angle}deg, ${colors[0] || '#000000'}, ${colors[1] || '#ff0000'})`;
                     } else {
                         // Use the new radial format for consistency
                         textBox.style.background = `radial-gradient(circle farthest-corner at center, ${colors[0] || '#000000'} 0%, ${colors[1] || '#ff0000'} 100%)`;
@@ -969,9 +1132,10 @@
                         const color1 = textBox.dataset.gradientColor1 || '#000000';
                         const color2 = textBox.dataset.gradientColor2 || '#000000';
                         const gradientType = textBox.dataset.gradientType || 'linear';
+                        const angle = textBox.dataset.gradientAngle || '90';
                         
                         if (gradientType === 'linear') {
-                            htmlContent += `            background: linear-gradient(90deg, ${color1}, ${color2});
+                            htmlContent += `            background: linear-gradient(${angle}deg, ${color1}, ${color2});
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -1045,6 +1209,7 @@
             textBox.dataset.gradientColor1 = '#000000';
             textBox.dataset.gradientColor2 = '#ff0000';
             textBox.dataset.gradientType = 'linear';
+            textBox.dataset.gradientAngle = '90';
             textBox.dataset.fontFamily = 'Arial';
             textBox.dataset.outlineEnabled = 'false';
             textBox.dataset.outlineColor = '#000000';
@@ -1233,6 +1398,11 @@
                 gradientEnabled = true;
                 toggleButton.textContent = '-';
                 gradientControls.classList.add('visible');
+                
+                // Load gradient angle
+                gradientAngle = parseInt(textBox.dataset.gradientAngle) || 90;
+                const compassLine = document.getElementById('compassLine');
+                compassLine.style.transform = `translate(-50%, -100%) rotate(${gradientAngle}deg)`;
             } else {
                 gradientEnabled = false;
                 toggleButton.textContent = '+';
