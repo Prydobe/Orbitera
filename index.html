@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbitera</title>
+    <title>Orberita</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Impact&family=Lexend:wght@400;700&family=Merriweather:wght@400;700&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
@@ -380,6 +380,168 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
+        .toggle-shadow-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-shadow-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .toggle-bold-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-bold-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .toggle-bold-button.active {
+            background-color: #4a90e2;
+            color: white;
+        }
+
+        .shadow-edit-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shadow-edit-button.visible {
+            display: flex;
+        }
+
+        .shadow-edit-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .shadow-editor-popup {
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            width: 200px;
+            background-color: #e0e0e0;
+            border: 2px solid #999;
+            border-radius: 12px;
+            padding: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .shadow-editor-popup.visible {
+            display: flex;
+        }
+
+        .shadow-editor-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .shadow-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, transparent, #000);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .shadow-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4a90e2;
+            border: 2px solid white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .shadow-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4a90e2;
+            border: 2px solid white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .shadow-compass {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #f5f5f5;
+            border: 2px solid #666;
+            position: relative;
+            margin: 0 auto;
+            pointer-events: none;
+        }
+
+        .shadow-compass-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 45px;
+            background-color: #333;
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%) rotate(135deg);
+            cursor: grab;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .shadow-compass-line:active {
+            cursor: grabbing;
+        }
+
+        .shadow-compass-tip {
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 8px solid #333;
+            pointer-events: none;
+        }
+
         .draggable-text {
             position: absolute;
             padding: 5px 10px;
@@ -521,6 +683,26 @@
             </div>
             
             <input type="range" class="transparency-slider" id="transparencySlider" min="0" max="1" step="0.01" value="1">
+            
+            <button class="toggle-shadow-button" id="toggleShadowButton" onclick="toggleShadow()">S</button>
+            
+            <button class="toggle-bold-button" id="toggleBoldButton" onclick="toggleBold()">B</button>
+            
+            <button class="shadow-edit-button" id="shadowEditButton" onclick="toggleShadowEditor(event)">edit</button>
+            
+            <div class="shadow-editor-popup" id="shadowEditorPopup">
+                <div class="shadow-editor-label">Opacity</div>
+                <input type="range" class="shadow-slider" id="shadowOpacitySlider" min="0" max="1" step="0.01" value="1">
+                
+                <div class="shadow-editor-label">Distance</div>
+                <input type="range" class="shadow-slider" id="shadowDistanceSlider" min="0" max="50" step="1" value="5">
+                
+                <div class="shadow-compass">
+                    <div class="shadow-compass-line" id="shadowCompassLine">
+                        <div class="shadow-compass-tip"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="right-section" id="rightSection">
@@ -656,6 +838,104 @@
         let outlineEnabled = false;
         let gradientAngle = 90; // Default angle for linear gradient (left to right)
         let isDraggingCompass = false;
+        let shadowEnabled = false;
+        let shadowAngle = 135; // Default shadow angle (bottom-right)
+        let shadowDistance = 5;
+        let shadowOpacity = 1;
+        let isDraggingShadowCompass = false;
+
+        function toggleShadow() {
+            const toggleButton = document.getElementById('toggleShadowButton');
+            const editButton = document.getElementById('shadowEditButton');
+            
+            shadowEnabled = !shadowEnabled;
+            
+            if (shadowEnabled) {
+                toggleButton.textContent = '-';
+                editButton.classList.add('visible');
+                if (selectedTextBox) {
+                    applyShadow();
+                }
+            } else {
+                toggleButton.textContent = 'S';
+                editButton.classList.remove('visible');
+                document.getElementById('shadowEditorPopup').classList.remove('visible');
+                if (selectedTextBox) {
+                    removeShadow();
+                }
+            }
+        }
+
+        function toggleShadowEditor(e) {
+            if (e) e.stopPropagation();
+            const popup = document.getElementById('shadowEditorPopup');
+            popup.classList.toggle('visible');
+        }
+
+        function toggleBold() {
+            if (!selectedTextBox) return;
+            
+            const isBold = selectedTextBox.dataset.isBold === 'true';
+            const toggleButton = document.getElementById('toggleBoldButton');
+            
+            if (isBold) {
+                // Remove bold
+                selectedTextBox.style.fontWeight = 'normal';
+                selectedTextBox.dataset.isBold = 'false';
+                toggleButton.classList.remove('active');
+            } else {
+                // Apply bold
+                selectedTextBox.style.fontWeight = 'bold';
+                selectedTextBox.dataset.isBold = 'true';
+                toggleButton.classList.add('active');
+            }
+            
+            updateHTMLCode();
+        }
+
+        function applyShadow() {
+            if (!selectedTextBox) return;
+            
+            const angle = shadowAngle;
+            const distance = shadowDistance;
+            const opacity = shadowOpacity;
+            
+            // Convert angle to x,y offset
+            const radians = (angle - 90) * (Math.PI / 180);
+            const x = Math.cos(radians) * distance;
+            const y = Math.sin(radians) * distance;
+            
+            selectedTextBox.dataset.shadowEnabled = 'true';
+            selectedTextBox.dataset.shadowAngle = angle;
+            selectedTextBox.dataset.shadowDistance = distance;
+            selectedTextBox.dataset.shadowOpacity = opacity;
+            
+            selectedTextBox.style.textShadow = `${x.toFixed(1)}px ${y.toFixed(1)}px 3px rgba(0, 0, 0, ${opacity})`;
+            
+            updateHTMLCode();
+        }
+
+        function removeShadow() {
+            if (!selectedTextBox) return;
+            
+            selectedTextBox.dataset.shadowEnabled = 'false';
+            selectedTextBox.style.textShadow = '';
+            
+            updateHTMLCode();
+        }
+
+        // Close shadow edit popup when clicking outside
+        document.addEventListener('click', function(e) {
+            const popup = document.getElementById('shadowEditorPopup');
+            const editButton = document.getElementById('shadowEditButton');
+            const compassLine = document.getElementById('shadowCompassLine');
+            
+            if (!editButton.contains(e.target) && 
+                !popup.contains(e.target) &&
+                popup.classList.contains('visible')) {
+                popup.classList.remove('visible');
+            }
+        });
 
         function toggleCompass(e) {
             if (e) e.stopPropagation();
@@ -720,6 +1000,62 @@
                 if (isDraggingCompass) {
                     isDraggingCompass = false;
                     compassLine.style.cursor = 'grab';
+                }
+            });
+
+            // Shadow compass dragging
+            const shadowCompassLine = document.getElementById('shadowCompassLine');
+            const shadowCompass = shadowCompassLine.parentElement;
+
+            shadowCompassLine.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                isDraggingShadowCompass = true;
+                shadowCompassLine.style.cursor = 'grabbing';
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isDraggingShadowCompass) return;
+                
+                const rect = shadowCompass.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const deltaX = e.clientX - centerX;
+                const deltaY = e.clientY - centerY;
+                
+                let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+                angle = angle + 90;
+                if (angle < 0) angle += 360;
+                
+                shadowAngle = Math.round(angle);
+                shadowCompassLine.style.transform = `translate(-50%, -100%) rotate(${shadowAngle}deg)`;
+                
+                if (selectedTextBox && shadowEnabled) {
+                    applyShadow();
+                }
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isDraggingShadowCompass) {
+                    isDraggingShadowCompass = false;
+                    shadowCompassLine.style.cursor = 'grab';
+                }
+            });
+
+            // Shadow opacity slider
+            document.getElementById('shadowOpacitySlider').addEventListener('input', function(e) {
+                shadowOpacity = parseFloat(e.target.value);
+                if (selectedTextBox && shadowEnabled) {
+                    applyShadow();
+                }
+            });
+
+            // Shadow distance slider
+            document.getElementById('shadowDistanceSlider').addEventListener('input', function(e) {
+                shadowDistance = parseFloat(e.target.value);
+                if (selectedTextBox && shadowEnabled) {
+                    applyShadow();
                 }
             });
         });
@@ -963,6 +1299,8 @@
                 const outlineMatch = styles.match(/-webkit-text-stroke:\s*2px\s*([^;]+);/);
                 const opacityMatch = styles.match(/opacity:\s*([0-9.]+);/);
                 const transformMatch = styles.match(/transform:\s*translate\(-50%,\s*-50%\);/);
+                const shadowMatch = styles.match(/text-shadow:\s*([^;]+);/);
+                const fontWeightMatch = styles.match(/font-weight:\s*(bold|normal);/);
                 
                 let textBox;
                 if (existingTextBoxes[index]) {
@@ -983,6 +1321,11 @@
                     textBox.dataset.outlineEnabled = 'false';
                     textBox.dataset.outlineColor = '#000000';
                     textBox.dataset.opacity = '1';
+                    textBox.dataset.shadowEnabled = 'false';
+                    textBox.dataset.shadowAngle = '135';
+                    textBox.dataset.shadowDistance = '5';
+                    textBox.dataset.shadowOpacity = '1';
+                    textBox.dataset.isBold = 'false';
                     
                     // Add resize handles
                     const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -1154,6 +1497,43 @@
                     textBox.dataset.opacity = opacity;
                 } else {
                     textBox.dataset.opacity = '1';
+                }
+                if (shadowMatch) {
+                    const shadowValue = shadowMatch[1].trim();
+                    // Parse shadow: "5px 5px 3px rgba(0, 0, 0, 1)"
+                    const shadowParts = shadowValue.match(/([-0-9.]+)px\s+([-0-9.]+)px\s+\d+px\s+rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)/);
+                    if (shadowParts) {
+                        const x = parseFloat(shadowParts[1]);
+                        const y = parseFloat(shadowParts[2]);
+                        const opacity = parseFloat(shadowParts[3]);
+                        
+                        // Calculate angle and distance from x,y
+                        const distance = Math.sqrt(x * x + y * y);
+                        let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+                        if (angle < 0) angle += 360;
+                        
+                        textBox.dataset.shadowEnabled = 'true';
+                        textBox.dataset.shadowAngle = Math.round(angle).toString();
+                        textBox.dataset.shadowDistance = distance.toFixed(1);
+                        textBox.dataset.shadowOpacity = opacity.toString();
+                        textBox.style.textShadow = shadowValue;
+                    }
+                } else {
+                    textBox.dataset.shadowEnabled = 'false';
+                    textBox.style.textShadow = '';
+                }
+                if (fontWeightMatch) {
+                    const fontWeight = fontWeightMatch[1];
+                    if (fontWeight === 'bold') {
+                        textBox.style.fontWeight = 'bold';
+                        textBox.dataset.isBold = 'true';
+                    } else {
+                        textBox.style.fontWeight = 'normal';
+                        textBox.dataset.isBold = 'false';
+                    }
+                } else {
+                    textBox.style.fontWeight = 'normal';
+                    textBox.dataset.isBold = 'false';
                 }
                 
                 // Check if gradient or solid color
@@ -1361,6 +1741,8 @@
                     const hasOutline = textBox.dataset.outlineEnabled === 'true';
                     const outlineColor = textBox.dataset.outlineColor || '#000000';
                     const opacity = textBox.dataset.opacity || '1';
+                    const hasShadow = textBox.dataset.shadowEnabled === 'true';
+                    const isBold = textBox.dataset.isBold === 'true';
                     
                     htmlContent += `        .text${index + 1} {
             font-size: ${fontSize}px;
@@ -1371,8 +1753,26 @@
             font-family: ${fontFamily};
 `;
                     
+                    if (isBold) {
+                        htmlContent += `            font-weight: bold;
+`;
+                    }
+                    
                     if (hasOutline) {
                         htmlContent += `            -webkit-text-stroke: 2px ${outlineColor};
+`;
+                    }
+                    
+                    if (hasShadow) {
+                        const shadowAngle = parseFloat(textBox.dataset.shadowAngle) || 135;
+                        const shadowDistance = parseFloat(textBox.dataset.shadowDistance) || 5;
+                        const shadowOpacity = parseFloat(textBox.dataset.shadowOpacity) || 1;
+                        
+                        const radians = (shadowAngle - 90) * (Math.PI / 180);
+                        const x = Math.cos(radians) * shadowDistance;
+                        const y = Math.sin(radians) * shadowDistance;
+                        
+                        htmlContent += `            text-shadow: ${x.toFixed(1)}px ${y.toFixed(1)}px 3px rgba(0, 0, 0, ${shadowOpacity});
 `;
                     }
                     
@@ -1468,6 +1868,11 @@
             textBox.dataset.outlineEnabled = 'false';
             textBox.dataset.outlineColor = '#000000';
             textBox.dataset.opacity = '1';
+            textBox.dataset.shadowEnabled = 'false';
+            textBox.dataset.shadowAngle = '135';
+            textBox.dataset.shadowDistance = '5';
+            textBox.dataset.shadowOpacity = '1';
+            textBox.dataset.isBold = 'false';
 
             // Create resize handles
             const handles = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -1648,6 +2053,40 @@
             // Update transparency slider
             const opacity = textBox.dataset.opacity || '1';
             document.getElementById('transparencySlider').value = opacity;
+            
+            // Update shadow button and state
+            const hasShadow = textBox.dataset.shadowEnabled === 'true';
+            const toggleShadowButton = document.getElementById('toggleShadowButton');
+            const shadowEditButton = document.getElementById('shadowEditButton');
+            
+            if (hasShadow) {
+                shadowEnabled = true;
+                toggleShadowButton.textContent = '-';
+                shadowEditButton.classList.add('visible');
+                
+                // Load shadow properties
+                shadowAngle = parseInt(textBox.dataset.shadowAngle) || 135;
+                shadowDistance = parseFloat(textBox.dataset.shadowDistance) || 5;
+                shadowOpacity = parseFloat(textBox.dataset.shadowOpacity) || 1;
+                
+                document.getElementById('shadowOpacitySlider').value = shadowOpacity;
+                document.getElementById('shadowDistanceSlider').value = shadowDistance;
+                document.getElementById('shadowCompassLine').style.transform = `translate(-50%, -100%) rotate(${shadowAngle}deg)`;
+            } else {
+                shadowEnabled = false;
+                toggleShadowButton.textContent = 'S';
+                shadowEditButton.classList.remove('visible');
+                document.getElementById('shadowEditorPopup').classList.remove('visible');
+            }
+            
+            // Update bold button
+            const isBold = textBox.dataset.isBold === 'true';
+            const toggleBoldButton = document.getElementById('toggleBoldButton');
+            if (isBold) {
+                toggleBoldButton.classList.add('active');
+            } else {
+                toggleBoldButton.classList.remove('active');
+            }
             
             // Update gradient button and controls
             const toggleButton = document.getElementById('toggleGradientButton');
